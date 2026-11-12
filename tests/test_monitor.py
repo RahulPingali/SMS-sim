@@ -1,0 +1,89 @@
+from sms_sim import monitor
+from sms_sim.stats import Stats
+from threading import Thread, Event
+import unittest
+import time
+
+class TestMonitor(unittest.TestCase):
+    def test_monitor_stops(self):
+        stats_instance = Stats()
+        stop_event = Event()
+        output_list = []
+
+        def fake_output(message):
+            output_list.append(message)
+
+        # Start the monitor in a separate thread
+        monitor_thread = Thread(
+            target=monitor.run_monitor,
+            args=(stats_instance, 0.1, stop_event, fake_output)
+        )
+        monitor_thread.start()
+
+        # Let it run for a short while
+        time.sleep(0.3)
+        stop_event.set()  # Signal the monitor to stop
+        monitor_thread.join(timeout=1)
+
+        # Verify that the monitor has stopped
+        self.assertFalse(monitor_thread.is_alive())
+        self.assertTrue(len(output_list) > 0)  # Ensure some output was captured
+
+    def test_monitor_periodic_updates(self):
+        stats_instance = Stats()
+        stop_event = Event()
+        output_list = []
+
+        def fake_output(message):
+            output_list.append(message)
+
+        # Start the monitor in a separate thread
+        monitor_thread = Thread(
+            target=monitor.run_monitor,
+            args=(stats_instance, 0.1, stop_event, fake_output)
+        )
+        monitor_thread.start()
+
+        # Record some stats while the monitor is running
+        for _ in range(5):
+            stats_instance.record(success=True, elapsed=0.1)
+            time.sleep(0.05)
+
+        stop_event.set()  # Signal the monitor to stop
+        monitor_thread.join(timeout=1)
+
+        # Verify that the monitor has captured periodic updates
+        self.assertTrue(len(output_list) > 0)
+
+    def test_invalid_interval(self):
+        stats_instance = Stats()
+        stop_event = Event()
+
+        with self.assertRaises(ValueError):
+            monitor.run_monitor(stats_instance, -1, stop_event, print)  # Negative interval should raise ValueError
+
+    def test_immediate_stop(self):
+        stats_instance = Stats()
+        stop_event = Event()
+        output_list = []
+
+        def fake_output(message):
+            output_list.append(message)
+
+        # Signal shutdown before starting the monitor
+        stop_event.set()
+
+        monitor_thread = Thread(
+            target=monitor.run_monitor,
+            args=(stats_instance, 0.1, stop_event, fake_output)
+        )
+
+        monitor_thread.start()
+        monitor_thread.join(timeout=1)
+
+        # Verify that the monitor stopped
+        self.assertFalse(monitor_thread.is_alive())
+
+        # Only the final summary should be printed
+        self.assertEqual(len(output_list), 1)
+        self.assertTrue(output_list[0].startswith("Final Stats"))
