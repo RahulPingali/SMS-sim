@@ -70,7 +70,7 @@ class testProduce(unittest.TestCase):
             message1 = num_queue1.get()
             message2 = num_queue2.get()
             self.assertEqual(message1, message2)
-    
+            
     def test_produce_zero_messages(self):
         rng = random.Random(42)
         num_queue = Queue()

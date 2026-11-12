@@ -1,5 +1,3 @@
-# sms_sim/config.py
-
 import math
 
 # Default Constants
@@ -39,35 +37,26 @@ class Config:
 
     def validate(self):
         """Validate configuration parameters, raising ValueError on failure."""
-
-        # Message count can be zero
         if type(self.messages) is not int or self.messages < 0:
             raise ValueError("messages must be a non-negative integer (>= 0).")
 
-        # At least one sender is required
         if type(self.senders) is not int or self.senders <= 0:
             raise ValueError("senders must be a positive integer (> 0).")
 
-        # Mean sending delay must be positive and finite
         if not isinstance(self.mean_delay, (int, float)) or not math.isfinite(self.mean_delay) or self.mean_delay <= 0:
             raise ValueError("mean_delay must be a finite positive number.")
 
-        # Failure probability must be between 0 and 1
         if not isinstance(self.failure_rate, (int, float)) or not math.isfinite(self.failure_rate) or not (0.0 <= self.failure_rate <= 1.0):
             raise ValueError("failure_rate must be between 0.0 and 1.0 inclusive.")
 
-        # Monitoring interval must be positive and finite
         if not isinstance(self.interval, (int, float)) or not math.isfinite(self.interval) or self.interval <= 0:
             raise ValueError("interval must be a finite positive number.")
 
-        # Queue must have positive capacity
         if type(self.queue_size) is not int or self.queue_size <= 0:
             raise ValueError("queue_size must be a positive integer (> 0).")
 
-        # Message length must be positive
         if type(self.max_message_length) is not int or self.max_message_length <= 0:
             raise ValueError("max_message_length must be a positive integer (> 0).")
 
-        # Seed must be an integer or None
         if self.seed is not None and type(self.seed) is not int:
             raise ValueError("seed must be an integer or None.")

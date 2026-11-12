@@ -2,7 +2,6 @@ import unittest
 import random
 from queue import Queue
 from threading import Thread
-
 from sms_sim import sender
 from sms_sim.stats import Stats
 
@@ -15,15 +14,12 @@ class TestSender(unittest.TestCase):
         failure_rate = 0.0
         rng = random.Random(42)
 
-        # Fake sleep to avoid real delays during testing
         def fake_sleep(seconds):
             pass
 
-        # Add a message and shutdown sentinel
         message_queue.put("Test message")
         message_queue.put(None)
 
-        # Run sender in a separate thread
         sender_thread = Thread(
             target=sender.run_sender,
             args=(
@@ -39,10 +35,9 @@ class TestSender(unittest.TestCase):
         sender_thread.start()
         sender_thread.join(timeout=2)
 
-        # Verify the sender terminated
+        
         self.assertFalse(sender_thread.is_alive())
-
-        # Verify statistics
+ 
         snapshot = stats_instance.snapshot()
         self.assertEqual(snapshot["sent"], 1)
         self.assertEqual(snapshot["failed"], 0)
@@ -51,7 +46,7 @@ class TestSender(unittest.TestCase):
         message_queue = Queue()
         stats_instance = Stats()
         mean_delay = 0.1
-        failure_rate = 1.0  # Force failure
+        failure_rate = 1.0  
         rng = random.Random(42)
 
         def fake_sleep(seconds):
@@ -85,7 +80,7 @@ class TestSender(unittest.TestCase):
         message_queue = Queue()
         stats_instance = Stats()
         mean_delay = 0.1
-        failure_rate = 0.5  # 50% chance of failure
+        failure_rate = 0.5 
         rng = random.Random(42)
 
         def fake_sleep(seconds):
@@ -152,7 +147,7 @@ class TestSender(unittest.TestCase):
     def test_invalid_mean_delay(self):
         message_queue = Queue()
         stats_instance = Stats()
-        mean_delay = 0.0  # Invalid
+        mean_delay = 0.0  
         failure_rate = 0.0
         rng = random.Random(42)
 
@@ -163,7 +158,7 @@ class TestSender(unittest.TestCase):
         message_queue = Queue()
         stats_instance = Stats()
         mean_delay = 0.1
-        failure_rate = 1.5  # Invalid
+        failure_rate = 1.5  
         rng = random.Random(42)
 
         with self.assertRaises(ValueError):

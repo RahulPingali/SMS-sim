@@ -9,19 +9,21 @@ import argparse
 from sms_sim import config
 
 def run_simulation(config, output=print):
-    # 1. Initialize shared resources
+    """Run the pipeline and return the final stats.
+    Starts the monitor and sender threads, then the producer. After the
+    producer finishes, sends one None sentinel per sender, waits for all
+    senders to exit, and stops the monitor. Returns stats.snapshot():
+    a dict with sent, failed, and avg_time.
+    """
     message_queue = Queue(maxsize=config.queue_size)
     stats_instance = Stats()
     stop_event = Event()
 
-    # 2. Create and start monitor thread
     monitor_thread = Thread(
         target=run_monitor,
         args=(stats_instance, config.interval, stop_event, output)
     )
     monitor_thread.start()
-
-    # 3. Create and start sender threads
     sender_threads = []
 
     for i in range(config.senders):
@@ -44,7 +46,6 @@ def run_simulation(config, output=print):
         sender_threads.append(sender_thread)
         sender_thread.start()
 
-    # 4. Create and start producer thread
     if config.seed is not None:
         producer_rng = random.Random(config.seed)
     else:
@@ -60,23 +61,17 @@ def run_simulation(config, output=print):
         )
     )
     producer_thread.start()
-
-    # 5. Wait for producer to finish
     producer_thread.join()
 
-    # 6. Send one shutdown sentinel per sender
     for _ in range(config.senders):
         message_queue.put(None)
 
-    # 7. Wait for all sender threads to finish
     for sender_thread in sender_threads:
         sender_thread.join()
 
-    # 8. Stop the monitor and wait for it
     stop_event.set()
     monitor_thread.join()
 
-    # 9. Return final statistics
     return stats_instance.snapshot()
 
 def parse_args(argv=None):
